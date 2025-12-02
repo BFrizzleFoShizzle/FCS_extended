@@ -39,8 +39,8 @@
     <Reference Include="0Harmony, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Lib.Harmony.2.4.2\lib\net472\0Harmony.dll</HintPath>
     </Reference>
-    <Reference Include="FCS_extended_plugin, Version=0.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\FCS_extended_plugin.0.0.1\lib\net48\FCS_extended_plugin.dll</HintPath>
+    <Reference Include="FCS_extended_plugin, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\BFrizzleFoShizzle.FCS_extended.Plugin.1.0.0\lib\net48\FCS_extended_plugin.dll</HintPath>
     </Reference>
     <!--
     <Reference Include="FCS_gog">

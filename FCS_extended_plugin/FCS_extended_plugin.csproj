@@ -3,7 +3,16 @@
   <PropertyGroup>
     <TargetFramework>net4.8</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>0.0.1</Version>
+    <Version>1.0.0</Version>
+    <Description>Plugin interface for the FCS_extended (Forgotten Construction Set Extended).
+The FCS_extended is a code patch for the mod tools that come with the videogame Kenshi.</Description>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/BFrizzleFoShizzle/FCS_extended</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/BFrizzleFoShizzle/FCS_extended</RepositoryUrl>
+    <Authors>BFrizzleFoShizzle</Authors>
+    <PackageId>BFrizzleFoShizzle.FCS_extended.Plugin</PackageId>
+    <Product>FCS_extended_plugin</Product>
+    <PackageTags>plugin, fcs_extended, kenshi, mod, modding, forgotten, construction, set, re_kenshi, rekenshi</PackageTags>
   </PropertyGroup>
 
 </Project>
