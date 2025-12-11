@@ -366,8 +366,6 @@ namespace FCS_extended
 			[HarmonyPrefix]
 			static bool Prefix(ref object __result, Type enumType, string value)
 			{
-				//Console.WriteLine(enumType + " " + value);
-
 				IDictionary fcsenums_types = (IDictionary)Traverse.Create(AccessTools.TypeByName("forgotten_construction_set.FCSEnums")).Field("types").GetValue();
 				if (fcsenums_types.Contains(enumType.Name))
 				{
@@ -376,7 +374,6 @@ namespace FCS_extended
 
 					foreach (KeyValuePair<string, int> entry in fcsEnum)
 					{
-						//Console.WriteLine(entry.Key);
 						if (entry.Key == value)
 						{
 							__result = Enum.ToObject(enumType, entry.Value);
@@ -417,12 +414,9 @@ namespace FCS_extended
 				{
 					if (instruction.opcode == OpCodes.Constrained)
 					{
-						//Console.WriteLine(instruction);
-
 						if ((Type)instruction.operand == personaltyTags)
 						{
-							//instruction.opcode = OpCodes.Nop;
-							instruction.operand = typeof(NUMBER);// typeof(object);
+							instruction.operand = typeof(NUMBER);
 						}
 					}
 				}
@@ -464,7 +458,6 @@ namespace FCS_extended
 								// condition isn't supposed to have a tag, so remove the field
 								item.SubItems.RemoveAt(4);
 							}
-
 						}
 					}
 				}
