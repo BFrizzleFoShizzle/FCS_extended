@@ -20,7 +20,10 @@ namespace FCS_extended
 {
 	internal class FCS_extended
 	{
+		// loaded after vanilla
 		private static List<string> defFiles = new List<string>();
+		// loaded before vanilla
+		private static List<string> preloadDefFiles = new List<string>();
 		private static Assembly assembly = null;
 		private static Dictionary<string, List<KeyValuePair<Regex, string>>> defFilePatches = new Dictionary<string, List<KeyValuePair<Regex, string>>>();
 
@@ -74,6 +77,10 @@ namespace FCS_extended
 				if (File.Exists(Path.Combine(dir, "fcs.def")))
 				{
 					defFiles.Add(Path.Combine(dir, "fcs.def"));
+				}
+				if (File.Exists(Path.Combine(dir, "fcs_preload.def")))
+				{
+					preloadDefFiles.Add(Path.Combine(dir, "fcs_preload.def"));
 				}
 
 				foreach (string file in Directory.GetFiles(dir, "*.def.patch"))
@@ -149,9 +156,21 @@ namespace FCS_extended
 		public class Definitions_Load_Patch
 		{
 			private static bool initialized = false;
+			private static bool preloaded = false;
 			[HarmonyPrefix]
 			static void Prefix(string filename, dynamic nav)
 			{
+				if(!preloaded)
+				{
+					preloaded = true;
+					// load custom definitions
+					Type baseDefinitions_type = assembly.GetType("forgotten_construction_set.Definitions");
+					MethodInfo baseDefinitions_Load = AccessTools.Method("forgotten_construction_set.Definitions:Load");
+					foreach (string defFile in preloadDefFiles)
+					{
+						baseDefinitions_Load.Invoke(baseDefinitions_type, new object[] { defFile, nav });
+					}
+				}
 				if (filename.EndsWith("/settings.def") && !initialized)
 				{
 					initialized = true;
