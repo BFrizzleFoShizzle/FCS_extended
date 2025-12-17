@@ -1,5 +1,6 @@
 ﻿//using forgotten_construction_set;
 using HarmonyLib;
+using Steamworks;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -43,8 +44,33 @@ namespace FCS_extended
 			Console.WriteLine("Found FCS, loading " + path + "...");
 			assembly = Assembly.LoadFile(path);
 
-			Console.WriteLine("Scanning for plugins...");
-			foreach (string dir in Directory.EnumerateDirectories("mods"))
+            Console.WriteLine("Scanning for plugins...");
+
+            // try get Steam Workshop mod dir
+            List<string> steamMods = new List<string>();
+            if (path.EndsWith("forgotten construction set.exe"))
+			{
+				SteamAPI.Init();
+				uint numItems = SteamUGC.GetNumSubscribedItems();
+				PublishedFileId_t[] items = new PublishedFileId_t[numItems];
+				SteamUGC.GetSubscribedItems(items, numItems);
+
+				foreach (PublishedFileId_t item in items)
+				{
+					if ((SteamUGC.GetItemState(item) & (uint)EItemState.k_EItemStateInstalled) > 0)
+					{
+						ulong size;
+						string folder;
+						uint timestamp;
+						// MAX_PATH = 260
+						if (SteamUGC.GetItemInstallInfo(item, out size, out folder, 260, out timestamp))
+                            steamMods.Add(folder);
+					}
+				}
+			}
+
+
+            foreach (string dir in Directory.EnumerateDirectories("mods").Concat(steamMods))
 			{
 				string jsonPath = Path.Combine(dir, "FCS_extended.json");
 				if (File.Exists(jsonPath))
@@ -108,16 +134,7 @@ namespace FCS_extended
 
 			harmony.PatchAll();
 
-			/*
-			Type Dictionary_Type = typeof(Dictionary<,>).MakeGenericType(new Type[] { typeof(string), AccessTools.TypeByName("forgotten_construction_set.FCSEnum") });
-			Console.WriteLine(Dictionary_Type);
-			MethodInfo Dictionary_Add = Dictionary_Type.Method("Add");
-			Console.WriteLine(Dictionary_Add);
-			MethodInfo patch = typeof(Dictionary_Add_Patch<,>).MakeGenericType(new Type[] { typeof(string), AccessTools.TypeByName("forgotten_construction_set.FCSEnum") }).Method("Prefix");
-			Console.WriteLine(patch);
-			harmony.Patch(Dictionary_Add, new HarmonyMethod(patch));
-			*/
-			Console.WriteLine("Starting FCS...");
+            Console.WriteLine("Starting FCS...");
 			object[] argsWrapped = new object[1];
 			argsWrapped[0] = args;
 			assembly.EntryPoint.Invoke(null, argsWrapped);
