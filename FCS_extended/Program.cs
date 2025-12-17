@@ -480,7 +480,7 @@ namespace FCS_extended
 				}
 			}
 		}
-
+		/*
 		// patch window title
 		[HarmonyPatch("forgotten_construction_set.baseForm", "updateTitle")]
 		public static class baseForm_updateTitle
@@ -493,5 +493,6 @@ namespace FCS_extended
 					Traverse.Create(__instance).Property("Text").SetValue(title.Replace("Forgotten Construction Set ", "Forgotten Construction Set Extended "));
 			}
 		}
+		*/
 	}
 }
