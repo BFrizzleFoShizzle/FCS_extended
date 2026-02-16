@@ -64,7 +64,8 @@ namespace FCS_extended
 						uint timestamp;
 						// MAX_PATH = 260
 						if (SteamUGC.GetItemInstallInfo(item, out size, out folder, 260, out timestamp))
-                            steamMods.Add(folder);
+							if(File.Exists(folder))
+								steamMods.Add(folder);
 					}
 				}
 			}
