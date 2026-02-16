@@ -10,8 +10,10 @@ using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.Remoting.Contexts;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -21,6 +23,16 @@ namespace FCS_extended
 {
 	internal class FCS_extended
 	{
+		public class Settings
+		{
+			public Settings() { extensions = new Dictionary<string, Extension>(); }
+			public class Extension
+			{
+				public bool enabled { get; set; }
+			}
+			public Dictionary<string, Extension> extensions { get; set; }
+		}
+
 		// loaded after vanilla
 		private static List<string> defFiles = new List<string>();
 		// loaded before vanilla
@@ -70,6 +82,12 @@ namespace FCS_extended
 				}
 			}
 
+			// read in settings
+			Settings settings = new Settings();
+            if (System.IO.File.Exists(Application.UserAppDataPath + "/FCS_Extended.json"))
+                settings = JsonSerializer.Deserialize<Settings>(System.IO.File.ReadAllText(Application.UserAppDataPath + "/FCS_Extended.json"));
+
+            // TODO make form app so this isn't needed?
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Form extensionsSelectionForm = new Form();
@@ -83,8 +101,9 @@ namespace FCS_extended
             extensionsSelectionForm.Controls.Add(modsBox);
 			
             ListView modsView = new ListView();
+            modsView.Columns.Add("Extensions");
             modsView.Dock = DockStyle.Fill;
-            modsView.View = View.SmallIcon;
+            modsView.View = View.Details;
             modsView.GridLines = true;
             modsView.CheckBoxes = true;
             modsBox.Controls.Add(modsView);
@@ -104,21 +123,30 @@ namespace FCS_extended
 					|| File.Exists(Path.Combine(dir, "fcs_preload.def"))
 					|| Directory.GetFiles(dir, "*.def.patch").Length > 0)
 				{
-					modsView.Columns.Add("Extensions");
                     modsView.Items.Add(Path.GetFileName(dir), dir);
-					modsView.Items[modsView.Items.Count-1].Checked = true;
+					// disable if it exists in settings and is disabled
+					Settings.Extension ex = settings.extensions.GetValueSafe(dir);
+                    if (ex != null && !ex.enabled)
+						modsView.Items[modsView.Items.Count-1].Checked = false;
+					else
+						// enable in all other situations (makes new extensions enabled by default)
+                        modsView.Items[modsView.Items.Count - 1].Checked = true;
                 }
             }
-			okButton.Select();
+			modsView.Columns[0].Width = modsView.ClientRectangle.Width;
+            //modsView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+            okButton.Select();
 
             // open plugin/extension selection
-            if (modsView.Columns.Count > 0)
+            if (modsView.Items.Count > 0)
 				extensionsSelectionForm.ShowDialog();
 
-			List<string> enabledExtensions = new List<string>();
+            List<string> enabledExtensions = new List<string>();
 			for(int i=0;i<modsView.Items.Count;++i)
 			{
-				if (modsView.Items[i].Checked)
+				settings.extensions[modsView.Items[i].ImageKey] = new Settings.Extension { enabled = modsView.Items[i].Checked };
+
+                if (modsView.Items[i].Checked)
 				{
 					enabledExtensions.Add(modsView.Items[i].ImageKey);
 
@@ -129,6 +157,9 @@ namespace FCS_extended
 				
 				Console.WriteLine(modsView.Items[i].ImageKey);
 			}
+
+			// write out settings
+            System.IO.File.WriteAllText(Application.UserAppDataPath + "/FCS_extended.json", JsonSerializer.Serialize(settings));
 
             foreach (string dir in enabledExtensions)
 			{
