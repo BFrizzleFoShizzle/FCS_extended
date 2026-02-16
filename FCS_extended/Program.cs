@@ -70,8 +70,67 @@ namespace FCS_extended
 				}
 			}
 
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Form extensionsSelectionForm = new Form();
+			extensionsSelectionForm.Text = "Select extensions";
+            extensionsSelectionForm.Padding = new Padding(5);
+
+            GroupBox modsBox = new GroupBox();
+            modsBox.Padding = new Padding(4);
+            modsBox.Dock = DockStyle.Fill;
+            modsBox.Text = "Extensions";
+            extensionsSelectionForm.Controls.Add(modsBox);
+			
+            ListView modsView = new ListView();
+            modsView.Dock = DockStyle.Fill;
+            modsView.View = View.SmallIcon;
+            modsView.GridLines = true;
+            modsView.CheckBoxes = true;
+            modsBox.Controls.Add(modsView);
+
+			Button okButton = new Button();
+			okButton.Text = "OK";
+			okButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+			okButton.Dock = DockStyle.Bottom;
+			okButton.Click += (s, e) => extensionsSelectionForm.Close();
+            extensionsSelectionForm.Controls.Add(okButton);
 
             foreach (string dir in Directory.EnumerateDirectories("mods").Concat(steamMods))
+            {
+                // if mod contains any FCS_extended extensions
+                if (File.Exists(Path.Combine(dir, "FCS_extended.json"))
+                    || File.Exists(Path.Combine(dir, "fcs.def"))
+					|| File.Exists(Path.Combine(dir, "fcs_preload.def"))
+					|| Directory.GetFiles(dir, "*.def.patch").Length > 0)
+				{
+					modsView.Columns.Add("Extensions");
+                    modsView.Items.Add(Path.GetFileName(dir), dir);
+					modsView.Items[modsView.Items.Count-1].Checked = true;
+                }
+            }
+			okButton.Select();
+
+            // open plugin/extension selection
+            if (modsView.Columns.Count > 0)
+				extensionsSelectionForm.ShowDialog();
+
+			List<string> enabledExtensions = new List<string>();
+			for(int i=0;i<modsView.Items.Count;++i)
+			{
+				if (modsView.Items[i].Checked)
+				{
+					enabledExtensions.Add(modsView.Items[i].ImageKey);
+
+                    Console.Write("Enabled: ");
+				}
+				else
+					Console.Write("Disabled: ");
+				
+				Console.WriteLine(modsView.Items[i].ImageKey);
+			}
+
+            foreach (string dir in enabledExtensions)
 			{
 				string jsonPath = Path.Combine(dir, "FCS_extended.json");
 				if (File.Exists(jsonPath))
@@ -480,20 +539,31 @@ namespace FCS_extended
 					}
 				}
 			}
-		}
-		/*
-		// patch window title
-		[HarmonyPatch("forgotten_construction_set.baseForm", "updateTitle")]
-		public static class baseForm_updateTitle
-		{
-			[HarmonyPostfix]
-			static void Postfix(ref object __instance)
+        }
+
+        // disable SetCompatibleTextRenderingDefault after first call because it throws an exception
+        [HarmonyPatch(typeof(Application), "SetCompatibleTextRenderingDefault")]
+        public static class Application_SetCompatibleTextRenderingDefault
+        {
+            [HarmonyPrefix]
+			static bool Prefix(bool defaultValue)
 			{
-				string title = (string)Traverse.Create(__instance).Property("Text").GetValue();
-				if (!title.Contains(" Extended "))
-					Traverse.Create(__instance).Property("Text").SetValue(title.Replace("Forgotten Construction Set ", "Forgotten Construction Set Extended "));
+				return false;
 			}
-		}
-		*/
-	}
+        }
+        /*
+        // patch window title
+        [HarmonyPatch("forgotten_construction_set.baseForm", "updateTitle")]
+        public static class baseForm_updateTitle
+        {
+            [HarmonyPostfix]
+            static void Postfix(ref object __instance)
+            {
+                string title = (string)Traverse.Create(__instance).Property("Text").GetValue();
+                if (!title.Contains(" Extended "))
+                    Traverse.Create(__instance).Property("Text").SetValue(title.Replace("Forgotten Construction Set ", "Forgotten Construction Set Extended "));
+            }
+        }
+        */
+    }
 }
