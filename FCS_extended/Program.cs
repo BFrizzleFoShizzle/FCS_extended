@@ -56,11 +56,11 @@ namespace FCS_extended
 			Console.WriteLine("Found FCS, loading " + path + "...");
 			assembly = Assembly.LoadFile(path);
 
-            Console.WriteLine("Scanning for plugins...");
+			Console.WriteLine("Scanning for plugins...");
 
-            // try get Steam Workshop mod dir
-            List<string> steamMods = new List<string>();
-            if (path.EndsWith("forgotten construction set.exe"))
+			// try get Steam Workshop mod dir
+			List<string> steamMods = new List<string>();
+			if (path.EndsWith("forgotten construction set.exe"))
 			{
 				SteamAPI.Init();
 				uint numItems = SteamUGC.GetNumSubscribedItems();
@@ -76,7 +76,7 @@ namespace FCS_extended
 						uint timestamp;
 						// MAX_PATH = 260
 						if (SteamUGC.GetItemInstallInfo(item, out size, out folder, 260, out timestamp))
-							if(File.Exists(folder))
+							if (File.Exists(folder))
 								steamMods.Add(folder);
 					}
 				}
@@ -84,84 +84,84 @@ namespace FCS_extended
 
 			// read in settings
 			Settings settings = new Settings();
-            if (System.IO.File.Exists(Application.UserAppDataPath + "/FCS_Extended.json"))
-                settings = JsonSerializer.Deserialize<Settings>(System.IO.File.ReadAllText(Application.UserAppDataPath + "/FCS_Extended.json"));
+			if (System.IO.File.Exists(Application.UserAppDataPath + "/FCS_Extended.json"))
+				settings = JsonSerializer.Deserialize<Settings>(System.IO.File.ReadAllText(Application.UserAppDataPath + "/FCS_Extended.json"));
 
-            // TODO make form app so this isn't needed?
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Form extensionsSelectionForm = new Form();
+			// TODO make form app so this isn't needed?
+			Application.EnableVisualStyles();
+			Application.SetCompatibleTextRenderingDefault(false);
+			Form extensionsSelectionForm = new Form();
 			extensionsSelectionForm.Text = "Select extensions";
-            extensionsSelectionForm.Padding = new Padding(5);
+			extensionsSelectionForm.Padding = new Padding(5);
 
-            GroupBox modsBox = new GroupBox();
-            modsBox.Padding = new Padding(4);
-            modsBox.Dock = DockStyle.Fill;
-            modsBox.Text = "Extensions";
-            extensionsSelectionForm.Controls.Add(modsBox);
-			
-            ListView modsView = new ListView();
-            modsView.Columns.Add("Extensions");
-            modsView.Dock = DockStyle.Fill;
-            modsView.View = View.Details;
-            modsView.GridLines = true;
-            modsView.CheckBoxes = true;
-            modsBox.Controls.Add(modsView);
+			GroupBox modsBox = new GroupBox();
+			modsBox.Padding = new Padding(4);
+			modsBox.Dock = DockStyle.Fill;
+			modsBox.Text = "Extensions";
+			extensionsSelectionForm.Controls.Add(modsBox);
+
+			ListView modsView = new ListView();
+			modsView.Columns.Add("Extensions");
+			modsView.Dock = DockStyle.Fill;
+			modsView.View = View.Details;
+			modsView.GridLines = true;
+			modsView.CheckBoxes = true;
+			modsBox.Controls.Add(modsView);
 
 			Button okButton = new Button();
 			okButton.Text = "OK";
 			okButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
 			okButton.Dock = DockStyle.Bottom;
 			okButton.Click += (s, e) => extensionsSelectionForm.Close();
-            extensionsSelectionForm.Controls.Add(okButton);
+			extensionsSelectionForm.Controls.Add(okButton);
 
-            foreach (string dir in Directory.EnumerateDirectories("mods").Concat(steamMods))
-            {
-                // if mod contains any FCS_extended extensions
-                if (File.Exists(Path.Combine(dir, "FCS_extended.json"))
-                    || File.Exists(Path.Combine(dir, "fcs.def"))
+			foreach (string dir in Directory.EnumerateDirectories("mods").Concat(steamMods))
+			{
+				// if mod contains any FCS_extended extensions
+				if (File.Exists(Path.Combine(dir, "FCS_extended.json"))
+					|| File.Exists(Path.Combine(dir, "fcs.def"))
 					|| File.Exists(Path.Combine(dir, "fcs_preload.def"))
 					|| Directory.GetFiles(dir, "*.def.patch").Length > 0)
 				{
-                    modsView.Items.Add(Path.GetFileName(dir), dir);
+					modsView.Items.Add(Path.GetFileName(dir), dir);
 					// disable if it exists in settings and is disabled
 					Settings.Extension ex = settings.extensions.GetValueSafe(dir);
-                    if (ex != null && !ex.enabled)
-						modsView.Items[modsView.Items.Count-1].Checked = false;
+					if (ex != null && !ex.enabled)
+						modsView.Items[modsView.Items.Count - 1].Checked = false;
 					else
 						// enable in all other situations (makes new extensions enabled by default)
-                        modsView.Items[modsView.Items.Count - 1].Checked = true;
-                }
-            }
+						modsView.Items[modsView.Items.Count - 1].Checked = true;
+				}
+			}
 			modsView.Columns[0].Width = modsView.ClientRectangle.Width;
-            //modsView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
-            okButton.Select();
+			//modsView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+			okButton.Select();
 
-            // open plugin/extension selection
-            if (modsView.Items.Count > 0)
+			// open plugin/extension selection
+			if (modsView.Items.Count > 0)
 				extensionsSelectionForm.ShowDialog();
 
-            List<string> enabledExtensions = new List<string>();
-			for(int i=0;i<modsView.Items.Count;++i)
+			List<string> enabledExtensions = new List<string>();
+			for (int i = 0; i < modsView.Items.Count; ++i)
 			{
 				settings.extensions[modsView.Items[i].ImageKey] = new Settings.Extension { enabled = modsView.Items[i].Checked };
 
-                if (modsView.Items[i].Checked)
+				if (modsView.Items[i].Checked)
 				{
 					enabledExtensions.Add(modsView.Items[i].ImageKey);
 
-                    Console.Write("Enabled: ");
+					Console.Write("Enabled: ");
 				}
 				else
 					Console.Write("Disabled: ");
-				
+
 				Console.WriteLine(modsView.Items[i].ImageKey);
 			}
 
 			// write out settings
-            System.IO.File.WriteAllText(Application.UserAppDataPath + "/FCS_extended.json", JsonSerializer.Serialize(settings));
+			System.IO.File.WriteAllText(Application.UserAppDataPath + "/FCS_extended.json", JsonSerializer.Serialize(settings));
 
-            foreach (string dir in enabledExtensions)
+			foreach (string dir in enabledExtensions)
 			{
 				string jsonPath = Path.Combine(dir, "FCS_extended.json");
 				if (File.Exists(jsonPath))
@@ -225,7 +225,7 @@ namespace FCS_extended
 
 			harmony.PatchAll();
 
-            Console.WriteLine("Starting FCS...");
+			Console.WriteLine("Starting FCS...");
 			object[] argsWrapped = new object[1];
 			argsWrapped[0] = args;
 			assembly.EntryPoint.Invoke(null, argsWrapped);
@@ -268,7 +268,7 @@ namespace FCS_extended
 			[HarmonyPrefix]
 			static void Prefix(string filename, dynamic nav)
 			{
-				if(!preloaded)
+				if (!preloaded)
 				{
 					preloaded = true;
 					// load custom definitions
@@ -570,19 +570,19 @@ namespace FCS_extended
 					}
 				}
 			}
-        }
+		}
 
-        // disable SetCompatibleTextRenderingDefault after first call because it throws an exception
-        [HarmonyPatch(typeof(Application), "SetCompatibleTextRenderingDefault")]
-        public static class Application_SetCompatibleTextRenderingDefault
-        {
-            [HarmonyPrefix]
+		// disable SetCompatibleTextRenderingDefault after first call because it throws an exception
+		[HarmonyPatch(typeof(Application), "SetCompatibleTextRenderingDefault")]
+		public static class Application_SetCompatibleTextRenderingDefault
+		{
+			[HarmonyPrefix]
 			static bool Prefix(bool defaultValue)
 			{
 				return false;
 			}
-        }
-        /*
+		}
+		/*
         // patch window title
         [HarmonyPatch("forgotten_construction_set.baseForm", "updateTitle")]
         public static class baseForm_updateTitle
@@ -596,5 +596,5 @@ namespace FCS_extended
             }
         }
         */
-    }
+	}
 }
