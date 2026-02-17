@@ -23,6 +23,8 @@ namespace FCS_extended
 {
 	internal class FCS_extended
 	{
+		public static Harmony harmony;
+
 		public class Settings
 		{
 			public Settings() { extensions = new Dictionary<string, Extension>(); }
@@ -220,7 +222,7 @@ namespace FCS_extended
 				}
 			}
 
-			Harmony harmony = new Harmony("FCS_extended");
+			harmony = new Harmony("FCS_extended");
 			Harmony.DEBUG = true;
 
 			harmony.PatchAll();
@@ -271,6 +273,10 @@ namespace FCS_extended
 				if (!preloaded)
 				{
 					preloaded = true;
+
+					// apply title patch - this has to be done after baseForm's static initializer, this is a convenient place
+					harmony.Patch(assembly.GetType("forgotten_construction_set.baseForm").Method("updateTitle"), postfix: new HarmonyMethod(typeof(baseForm_updateTitle).GetMethod("Postfix")));
+
 					// load custom definitions
 					Type baseDefinitions_type = assembly.GetType("forgotten_construction_set.Definitions");
 					MethodInfo baseDefinitions_Load = AccessTools.Method("forgotten_construction_set.Definitions:Load");
@@ -639,19 +645,20 @@ namespace FCS_extended
 				return false;
 			}
 		}
-		/*
-        // patch window title
-        [HarmonyPatch("forgotten_construction_set.baseForm", "updateTitle")]
-        public static class baseForm_updateTitle
-        {
-            [HarmonyPostfix]
-            static void Postfix(ref object __instance)
-            {
-                string title = (string)Traverse.Create(__instance).Property("Text").GetValue();
-                if (!title.Contains(" Extended "))
-                    Traverse.Create(__instance).Property("Text").SetValue(title.Replace("Forgotten Construction Set ", "Forgotten Construction Set Extended "));
-            }
-        }
-        */
+		
+		// patch window title
+		// Harmony can't patch functions on objects with static constructors until the static constructor is run
+		// so we defer this patch until later 
+		//[HarmonyPatch("forgotten_construction_set.baseForm", "updateTitle")]
+		public static class baseForm_updateTitle
+		{
+			[HarmonyPostfix]
+			public static void Postfix(ref object __instance)
+			{
+				string title = (string)Traverse.Create(__instance).Property("Text").GetValue();
+				if (!title.Contains(" Extended "))
+					Traverse.Create(__instance).Property("Text").SetValue(title.Replace("Forgotten Construction Set ", "Forgotten Construction Set Extended "));
+			}
+		}
 	}
 }
