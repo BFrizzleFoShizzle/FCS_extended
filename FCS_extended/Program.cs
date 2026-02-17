@@ -276,6 +276,7 @@ namespace FCS_extended
 					MethodInfo baseDefinitions_Load = AccessTools.Method("forgotten_construction_set.Definitions:Load");
 					foreach (string defFile in preloadDefFiles)
 					{
+						//Console.WriteLine(defFile);
 						baseDefinitions_Load.Invoke(baseDefinitions_type, new object[] { defFile, nav });
 					}
 				}
@@ -297,6 +298,9 @@ namespace FCS_extended
 			static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
 			{
 				MethodInfo FileStream_CopyTo = AccessTools.Method("Stream:CopyTo", new Type[] { typeof(Stream) });
+				MethodInfo Enum_TryParse = typeof(Enum).GetMethods(BindingFlags.Public | BindingFlags.Static)
+							.Where(method => method.Name == "TryParse" && method.GetParameters().Length == 2).First()
+							.MakeGenericMethod(AccessTools.TypeByName("forgotten_construction_set.itemType"));
 
 				foreach (var instruction in instructions)
 				{
@@ -305,6 +309,13 @@ namespace FCS_extended
 						Console.WriteLine("Patched CopyTo");
 						instruction.opcode = OpCodes.Call;
 						instruction.operand = typeof(FCS_extended).GetMethod("Stream_CopyTo");
+					}
+					else if (instruction.Calls(Enum_TryParse))
+					{
+						// fix custom itemType
+						Console.WriteLine("Patched TryParse");
+						instruction.operand = typeof(FCS_extended).GetMethod("Enum_TryParse_itemType")
+							.MakeGenericMethod(AccessTools.TypeByName("forgotten_construction_set.itemType"));
 					}
 				}
 
@@ -569,6 +580,52 @@ namespace FCS_extended
 						}
 					}
 				}
+			}
+		}
+		// Patches to make custom itemType values work
+		// generic so we can set the correct arg type without statically linking to the FCS, which breaks simultaneous Steam + GOG compatibility
+		public static bool Enum_TryParse_itemType<T>(string value, out T result) where T : struct
+		{
+			// TODO try/catch or something
+			result = (T)Enum.Parse(AccessTools.TypeByName("forgotten_construction_set.itemType"), value);
+			return true;
+		}
+
+		// generics in Harmony are completely fucked so we patch the caller IL to redirect calls instead of hooking the called function
+		[HarmonyPatch("forgotten_construction_set.Definitions", "ParseLayout")]
+		public static class Definitions_ParseLayout_Patch
+		{
+			static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+			{
+				MethodInfo targetMethod = typeof(Enum).GetMethods(BindingFlags.Public | BindingFlags.Static)
+							.Where(method => method.Name == "TryParse" && method.GetParameters().Length == 2).First()
+							.MakeGenericMethod(AccessTools.TypeByName("forgotten_construction_set.itemType"));
+
+				foreach (var instruction in instructions)
+					if (instruction.Calls(targetMethod))
+						instruction.operand = typeof(FCS_extended).GetMethod("Enum_TryParse_itemType")
+							.MakeGenericMethod(AccessTools.TypeByName("forgotten_construction_set.itemType"));
+
+				return instructions;
+			}
+		}
+
+		// generics in Harmony are completely fucked so we patch the caller IL to redirect calls instead of hooking the called function
+		[HarmonyPatch("forgotten_construction_set.Definitions", "ParseItem")]
+		public static class Definitions_ParseItem_Patch
+		{
+			static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+			{
+				MethodInfo targetMethod = typeof(Enum).GetMethods(BindingFlags.Public | BindingFlags.Static)
+							.Where(method => method.Name == "TryParse" && method.GetParameters().Length == 2).First()
+							.MakeGenericMethod(AccessTools.TypeByName("forgotten_construction_set.itemType"));
+
+				foreach (var instruction in instructions)
+					if (instruction.Calls(targetMethod))
+						instruction.operand = typeof(FCS_extended).GetMethod("Enum_TryParse_itemType")
+							.MakeGenericMethod(AccessTools.TypeByName("forgotten_construction_set.itemType"));
+
+				return instructions;
 			}
 		}
 
