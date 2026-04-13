@@ -223,7 +223,7 @@ namespace FCS_extended
 			}
 
 			harmony = new Harmony("FCS_extended");
-			Harmony.DEBUG = true;
+			//Harmony.DEBUG = true;
 
 			harmony.PatchAll();
 
@@ -405,7 +405,6 @@ namespace FCS_extended
 
 				foreach (object enumVal in Enum.GetValues(AccessTools.TypeByName("forgotten_construction_set." + key)))
 				{
-					//Console.WriteLine(enumVal.ToString()  + " " + (int)enumVal);
 					typeof(T).GetMethod("AddValue", new Type[] { typeof(string), typeof(int), typeof(string) }).Invoke(value,
 						new object[] { enumVal.ToString(), (int)enumVal, null });
 				}
@@ -415,7 +414,6 @@ namespace FCS_extended
 				Console.WriteLine("Merging " + valueEnumerable.Count() + " keys for " + key);
 				foreach (KeyValuePair<string, int> entry in valueEnumerable)
 				{
-					//Console.WriteLine(entry);
 					// TODO comments
 					typeof(T).GetMethod("AddValue", new Type[] { typeof(string), typeof(int), typeof(string) }).Invoke(__instance[key],
 						new object[] { entry.Key, entry.Value, null });
@@ -494,7 +492,6 @@ namespace FCS_extended
 				IDictionary fcsenums_types = (IDictionary)Traverse.Create(AccessTools.TypeByName("forgotten_construction_set.FCSEnums")).Field("types").GetValue();
 				if (fcsenums_types.Contains(enumType.Name))
 				{
-					//Console.WriteLine("Finding...");
 					IEnumerable<KeyValuePair<string, int>> fcsEnum = fcsenums_types[enumType.Name] as IEnumerable<KeyValuePair<string, int>>;
 
 					foreach (KeyValuePair<string, int> entry in fcsEnum)
@@ -524,7 +521,7 @@ namespace FCS_extended
 
 			// fixes parsing of dialogue condition tags - all conditions >= DC_PERSONALITY_TAG have their tag
 			// added to the UI as an integer, to be parsed + replaced later
-			// we patch the following check to replace the PersonalityTags cast to NUMBER which has no entries
+			// we patch the following check to replace the PersonalityTags cast to NUMBER which has n`o entries
 			// so NUMBER.ToString() just converts the enum  value to it's corresponding integer
 			// if (dialogConditionEnum2 >= DialogConditionEnum.DC_PERSONALITY_TAG)
 			// {
